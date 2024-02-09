@@ -1,0 +1,52 @@
+include "String.aes"
+
+contract CarbonTrading =
+    record company = { name : string
+                     , legal_id : string
+                     , credit_limit : int
+                     , credit_availed : int }
+
+    let companies =
+        { "EcoCorp" => { name = "EcoCorp"
+                       , legal_id = "ECO123"
+                       , credit_limit = 1000
+                       , credit_availed = 0 }
+        , "GreenTech"=> { name = "GreenTech"
+                        , legal_id = "GTH456"
+                        , credit_limit = 800
+                        , credit_availed = 0 }
+        , "Environ" => { name = "Environ"
+                      , legal_id = "ENV345"
+                      , credit_limit = 800
+                      , credit_availed = 200 }
+        , "AirCool" => { name = "AirCool"
+                      , legal_id = "AIR123"
+                      , credit_limit = 2000
+                      , credit_availed = 1000 }
+        , "EarthHelp" => { name = "EarthHelp"
+                        , legal_id = "EHP567"
+                        , credit_limit = 2500
+                        , credit_availed = 1200 }
+        }
+
+    stateful entrypoint check_company(name : string, legal_id' : string) : string =
+        switch(Map.lookup(name, companies))
+            None => "Invalid name and ID"
+            Some(comp) =>
+                if comp.legal_id == legal_id
+                    let credit_info = get_credit_info(comp)
+                    String.concat("Credit limit: ", Int.to_str(credit_info._1))
+                    |> String.concat("\nCredit availed: ", Int.to_str(credit_info._2))
+                else
+                    "Invalid name and ID"
+
+    entrypoint get_credit_info(comp : company) : (int, int) =
+        (comp.credit_limit, comp.credit_availed)
+
+    stateful entrypoint request_credit(comp : company, requested_credit : int) : string =
+        let total_credit = comp.credit_availed + requested_credit
+        if total_credit <= comp.credit_limit
+            put(comp{ credit_availed = total_credit })
+            "Credit granted"
+        else
+            "Requested credit exceeds the limit"
